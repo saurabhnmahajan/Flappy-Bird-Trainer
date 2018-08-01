@@ -6,12 +6,14 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 
 import java.util.Random;
 
@@ -19,7 +21,7 @@ import sun.rmi.runtime.Log;
 
 public class FlappyBird extends ApplicationAdapter {
 	SpriteBatch batch;
-	Texture background, playBtn, settingsBtn;
+	Texture background, playBtn, settingsBtn, restartBtn;
 	Texture[] birds;
 	int flapState  = 0;
 	float birdY = 0, velocity = 0, gravity = 4.0f;
@@ -63,6 +65,7 @@ public class FlappyBird extends ApplicationAdapter {
 		gameOver = new Texture("gameover.png");
 		playBtn = new Texture("playbtn.png");
         settingsBtn = new Texture("settingsbtn.png");
+        restartBtn = new Texture("restartbtn.png");
         birdCircle = new Circle();
         topTubeRectangles = new Rectangle[numberOfTubes];
         bottomTubeRectangles = new Rectangle[numberOfTubes];
@@ -87,6 +90,7 @@ public class FlappyBird extends ApplicationAdapter {
         batch.begin();
         batch.draw(background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         if(gameState == 1) {
+            font.draw(batch, String.valueOf(score), 100, 200);
             if(tubeX[scoringTube] < (Gdx.graphics.getWidth()/2 - topTube.getWidth())) {
                 score++;
                 if(scoringTube < numberOfTubes - 1)
@@ -136,7 +140,9 @@ public class FlappyBird extends ApplicationAdapter {
             batch.draw(playBtn, Gdx.graphics.getWidth()/2 - playBtn.getWidth()/2 ,
                     Gdx.graphics.getHeight()/2 - playBtn.getHeight()/2);
             if(Gdx.input.justTouched()) {
-                Vector2 vec = new Vector2(Gdx.input.getX(), Gdx.input.getY());
+                Vector2 vec = new Vector2(Gdx.graphics.getWidth() - Gdx.input.getX(),
+                        Gdx.graphics.getHeight() - Gdx.input.getY());
+
                 Rectangle startClick = new Rectangle(Gdx.graphics.getWidth()/2 - playBtn.getWidth()/2,
                         Gdx.graphics.getHeight()/2 - playBtn.getHeight()/2  ,
                         playBtn.getWidth(),
@@ -152,14 +158,30 @@ public class FlappyBird extends ApplicationAdapter {
                 if(birdY < 0)
                     birdY = 0;
             }
+            GlyphLayout layout = new GlyphLayout(font, "Score: " + score);
+            float fontX = (float)Gdx.graphics.getWidth()/2 - layout.width/2;
+            float fontY = (float)Gdx.graphics.getHeight()/2 - layout.height/2;
+            font.draw(batch, "Score: " + score,  fontX, fontY);
             batch.draw(gameOver, Gdx.graphics.getWidth() /2 - gameOver.getWidth(),
-                    Gdx.graphics.getHeight()/2 - gameOver.getHeight(), gameOver.getWidth() * 2,gameOver.getHeight() * 2);
+                    Gdx.graphics.getHeight()/2 - gameOver.getHeight() + 200, gameOver.getWidth() * 2,gameOver.getHeight() * 2);
+            batch.draw(restartBtn, Gdx.graphics.getWidth()/2 - restartBtn.getWidth() / 2,
+                    Gdx.graphics.getHeight() /3 - restartBtn.getHeight()/2,
+                    restartBtn.getWidth(),
+                    restartBtn.getHeight());
             if(Gdx.input.justTouched()) {
-                gameState = 1;
-                startGame();
-                score = 0;
-                scoringTube = 0;
-                velocity = -80;
+                Vector2 vec = new Vector2(Gdx.graphics.getWidth() - Gdx.input.getX(),
+                        Gdx.graphics.getHeight() - Gdx.input.getY());
+                Rectangle restartClick = new Rectangle(Gdx.graphics.getWidth()/2 - restartBtn.getWidth() / 2,
+                        Gdx.graphics.getHeight() /3 - restartBtn.getHeight()/2 ,
+                        restartBtn.getWidth(),
+                        restartBtn.getHeight());
+                if(restartClick.contains(vec)) {
+                    gameState = 1;
+                    startGame();
+                    score = 0;
+                    scoringTube = 0;
+                    velocity = 0;
+                }
             }
         }
         if(flapState == 0) {
@@ -173,7 +195,6 @@ public class FlappyBird extends ApplicationAdapter {
             batch.draw(birds[flapState], Gdx.graphics.getWidth()/2 - birds[flapState].getWidth()/2, birdY);
         }
 
-        font.draw(batch, String.valueOf(score), 100, 200);
         batch.end();
 
         birdCircle.set(Gdx.graphics.getWidth() / 2, birdY + birds[flapState].getHeight()/2, birds[flapState].getWidth() / 2);
